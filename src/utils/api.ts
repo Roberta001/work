@@ -11,9 +11,9 @@ const api = axios.create({
 class Requester {
   static endpoint = {
     uploadFile: "/upload",
-    checkFile: "/upload/check",
+    checkFile: "/update/check_ranking",
     updateRanking: "/update/ranking",
-    updateSnapshot: "/update/snapshot",
+    updateSnapshot: "/update/snapshots",
     editArtistCheck: "/edit/artist/check",
     editArtistConfirm: "/edit/artist/confirm",
     editSong: "/edit/song",
@@ -75,10 +75,19 @@ class Requester {
         handlers.onStart();
     }
 
-    es.onmessage = (e) => {
-        // Some backends send data in 'message' event, others in custom events.
-        // If standard 'message' event is used:
-        handlers?.onProgress?.(e.data);
+    es.addEventListener("progress", (e: MessageEvent) => {
+      handlers?.onProgress?.(e.data);
+    });
+
+    es.addEventListener("complete", (e: MessageEvent) => {
+      handlers?.onComplete?.(e.data);
+      es.close(); 
+    });
+
+    es.onerror = (e) => {
+      if (es.readyState !== EventSource.CLOSED) {
+        handlers?.onError?.(e);
+      }
     };
 
     // If backend sends specific events named "progress" or "complete":

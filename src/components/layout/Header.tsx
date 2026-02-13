@@ -3,6 +3,10 @@ import { cn } from "@/lib/utils";
 
 const navs = [
   {
+    name: '首页',
+    path: '/'
+  },
+  {
     name: '打标',
     path: '/mark'
   },
@@ -20,7 +24,7 @@ export default function Header() {
   const location = useLocation();
 
   return (
-    <header className="h-10 w-full grid grid-cols-3 items-stretch justify-stretch border-b bg-background">
+    <header className="h-10 w-full grid grid-cols-4 items-stretch justify-stretch border-b bg-background">
       {navs.map((nav) => (
         <Link
           key={nav.path}

@@ -111,7 +111,7 @@ export default function MarkingCard({ record, include, onIncludeChange, index, s
   ];
 
   return (
-    <Card className={cn("w-full transition-colors", 
+    <Card className={cn("w-full transition-all duration-300 hover:shadow-lg hover:scale-[1.01]", 
       record.status === 'auto' ? "bg-yellow-100/50 dark:bg-yellow-900/20" : 
       record.status === 'done' ? "bg-sky-100/50 dark:bg-sky-900/20" : ""
     )}>
@@ -166,7 +166,8 @@ export default function MarkingCard({ record, include, onIncludeChange, index, s
                               controls 
                               autoPlay 
                               className="w-full h-full"
-                              referrerPolicy="no-referrer" 
+// @ts-expect-error referrerPolicy is missing in React types but valid HTML
+                      referrerPolicy="no-referrer"
                            >
                               您的浏览器不支持HTML5视频播放
                            </video>
