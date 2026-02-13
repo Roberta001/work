@@ -166,8 +166,8 @@ export default function MarkingCard({ record, include, onIncludeChange, index, s
                               controls 
                               autoPlay 
                               className="w-full h-full"
-// @ts-expect-error referrerPolicy is missing in React types but valid HTML
-                      referrerPolicy="no-referrer"
+                              // @ts-expect-error referrerPolicy is missing in React types but valid HTML
+                              referrerPolicy="no-referrer"
                            >
                               您的浏览器不支持HTML5视频播放
                            </video>
