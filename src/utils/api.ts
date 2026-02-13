@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { SongInfo, VideoInfo } from "@/utils/types";
 
-const BASE_URL = "https://api.vocabili.top/v2"
+const BASE_URL = "https://cors.vocaloid.world/https://api.vocabili.top/v2"
 
 const api = axios.create({
   baseURL: BASE_URL,
