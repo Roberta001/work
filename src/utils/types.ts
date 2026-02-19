@@ -7,6 +7,8 @@ export interface SongInfo {
   type: SongType
   vocadb_id: number
   display_name: string
+  producers?: { name: string, id: number }[]
+  vocalists?: { name: string, id: number }[]
 }
 
 export interface VideoInfo {

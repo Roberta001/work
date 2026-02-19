@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ExternalLink, PlayCircle, Loader2 } from 'lucide-react';
+import { PlayCircle, Loader2 } from 'lucide-react';
 import MarkingTags from './MarkingTags';
-import api from '@/utils/api';
+import MarkingNameInput from './MarkingNameInput';
 import { cn } from '@/lib/utils';
-import { useDebounce } from '@/hooks/use-debounce';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -25,29 +23,10 @@ interface MarkingCardProps {
 }
 
 export default function MarkingCard({ record, include, onIncludeChange, index, svmode, onUpdate }: MarkingCardProps) {
-  const [song, setSong] = useState<any>(null);
-  const [nameInput, setNameInput] = useState(record.name || '');
-  const debouncedName = useDebounce(nameInput, 500);
-
   // Video preview states
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!svmode && debouncedName) {
-       api.search('song', debouncedName).then(res => {
-          if (res.data) {
-             const exact = res.data.find((item: any) => item.name === debouncedName);
-             if (exact) setSong(exact);
-          }
-       }).catch(() => {});
-    }
-  }, [debouncedName, svmode]);
-  
-  useEffect(() => {
-     setNameInput(record.name || '');
-  }, [record.name]);
 
   const handleChange = (field: string, value: any) => {
     const newRecord = { ...record, [field]: value };
@@ -206,25 +185,10 @@ export default function MarkingCard({ record, include, onIncludeChange, index, s
                      <span className="text-muted-foreground text-xs">{field.label}</span>
                      
                      {field.type === 'string-hint' && (
-                        <div className="flex gap-2">
-                           <div className="relative w-full">
-                              <Input 
-                                 value={nameInput} 
-                                 onChange={(e) => {
-                                    setNameInput(e.target.value);
-                                    handleChange('name', e.target.value);
-                                 }}
-                                 className="h-9"
-                              />
-                           </div>
-                           {song && (
-                              <Button size="icon" variant="ghost" className="h-9 w-9" asChild>
-                                 <a href={`https://vocabili.top/song/${song.id}`} target="_blank">
-                                    <ExternalLink className="h-4 w-4" />
-                                 </a>
-                              </Button>
-                           )}
-                        </div>
+                        <MarkingNameInput
+                           value={record[field.prop]}
+                           onChange={(val) => handleChange(field.prop, val)}
+                        />
                      )}
 
                      {(field.type === 'tags' || field.type === 'tags-hint') && (
