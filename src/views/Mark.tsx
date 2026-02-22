@@ -37,12 +37,16 @@ function MarkContent() {
   const [gridLayout, setGridLayout] = useState(false); // false: list (1 col), true: grid (2 cols)
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { bookmarks, clearBookmarks, importBookmarks, exportBookmarks, updateBookmarkNote } = useBookmarks();
+  const { bookmarks, clearBookmarks, importBookmarks, exportBookmarks, updateBookmarkNote, addBookmarksBatch } = useBookmarks();
   const bookmarkInputRef = useRef<HTMLInputElement>(null);
 
   // Export options
   const [keepExcluded, setKeepExcluded] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  
+  // Incomplete records warning
+  const [incompleteDialogOpen, setIncompleteDialogOpen] = useState(false);
+  const [incompleteIndices, setIncompleteIndices] = useState<number[]>([]);
 
   // Keyboard shortcut for search
   useEffect(() => {
@@ -158,10 +162,65 @@ function MarkContent() {
      setAllRecords(newRecords);
   };
 
+  const getRequiredFields = (isSvmode: boolean) => {
+    if (isSvmode) {
+      return ['synthesizer', 'copyright'];
+    }
+    return ['name', 'vocal', 'author', 'synthesizer', 'copyright', 'type'];
+  };
+
+  const getIncompleteRecords = () => {
+    const reqFields = getRequiredFields(svmode);
+    const incomplete: number[] = [];
+
+    allRecords.forEach((record, index) => {
+      if (includeEntries[index]) {
+        const isComplete = reqFields.every(field => {
+          const val = record[field];
+          return val !== undefined && val !== null && val !== '';
+        });
+        if (!isComplete) {
+          incomplete.push(index);
+        }
+      }
+    });
+
+    return incomplete;
+  };
+
   // Handle export
   const handleExport = () => {
+    if (!keepExcluded) {
+      const incomplete = getIncompleteRecords();
+      if (incomplete.length > 0) {
+        setIncompleteIndices(incomplete);
+        setExportDialogOpen(false);
+        setIncompleteDialogOpen(true);
+        return;
+      }
+    }
+    performExport();
+  };
+
+  const performExport = () => {
     exportToExcel(allRecords, includeEntries, svmode, keepExcluded);
     setExportDialogOpen(false);
+    setIncompleteDialogOpen(false);
+  };
+
+  const handleAddIncompleteToBookmarks = () => {
+    const bookmarksToAdd = incompleteIndices.map(idx => ({
+      index: idx,
+      title: allRecords[idx].title || allRecords[idx].name || '未命名',
+      note: '信息未填写完整（导出时标记）'
+    }));
+    addBookmarksBatch(bookmarksToAdd);
+    setIncompleteDialogOpen(false);
+    
+    // Jump to the first incomplete record
+    if (incompleteIndices.length > 0) {
+      handleJumpToRecord(incompleteIndices[0]);
+    }
   };
 
   // Handle page change
@@ -470,6 +529,32 @@ function MarkContent() {
                     <DialogFooter>
                        <Button variant="outline" onClick={() => setExportDialogOpen(false)}>取消</Button>
                        <Button onClick={handleExport}>确认导出</Button>
+                    </DialogFooter>
+                 </DialogContent>
+              </Dialog>
+
+              <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
+                 <DialogContent>
+                    <DialogHeader>
+                       <DialogTitle className="text-destructive">存在未填写完整的歌曲</DialogTitle>
+                       <DialogDescription>
+                          您有 {incompleteIndices.length} 首勾选了"收录"的歌曲存在未填写的字段（如歌名、作者、引擎等）。未填写的歌曲如果不保留排除项，将可能导致导出的数据不完整。
+                       </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                       <p className="text-sm font-medium mb-2">建议的操作：</p>
+                       <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                          <li>将这些歌曲一键添加到书签，方便您跳转和修改</li>
+                          <li>或者您可以选择无视警告强制导出</li>
+                       </ul>
+                    </div>
+                    <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                       <Button variant="outline" onClick={() => setIncompleteDialogOpen(false)}>取消</Button>
+                       <Button variant="destructive" onClick={performExport}>强制导出</Button>
+                       <Button onClick={handleAddIncompleteToBookmarks} className="bg-blue-600 hover:bg-blue-700 text-white">
+                          <BookmarkIcon className="h-4 w-4 mr-2" />
+                          添加书签并跳转
+                       </Button>
                     </DialogFooter>
                  </DialogContent>
               </Dialog>
